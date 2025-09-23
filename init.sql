@@ -54,7 +54,7 @@ GO
 CREATE TABLE VoiceResponses (
     ResponseId INT IDENTITY(1,1) PRIMARY KEY,
     RequestId INT NOT NULL,
-    AudioBase64 NVARCHAR(MAX) NULL, -- Mejor usar VARBINARY(MAX) si es binario real
+    AudioBase64 NVARCHAR(MAX) NULL,
     AudioFormat NVARCHAR(10) DEFAULT 'wav', 
     DurationSeconds DECIMAL(5,2) NULL,
     CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),

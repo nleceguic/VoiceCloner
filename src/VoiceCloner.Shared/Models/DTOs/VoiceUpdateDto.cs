@@ -3,17 +3,15 @@
 namespace VoiceCloner.Shared.Models.DTOs
 {
     /// <summary>
-    /// DTO para registrar una nueva voz.
+    /// DTO para actualizar datos de una voz.
     /// </summary>
-    public class VoiceCreateDto
+    public class VoiceUpdateDto
     {
-        [Required]
         [StringLength(100)]
-        public string Name { get; set; } = string.Empty;
+        public string? Name { get; set; }
 
-        [Required]
         [StringLength(50)]
-        public string Provider { get; set; } = "ElevenLabs";
+        public string? Provider { get; set; }
 
         public string? ExternalId { get; set; }
 

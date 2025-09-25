@@ -1,64 +1,63 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using VoiceCloner.API.Data;
-using VoiceCloner.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
 using VoiceCloner.Shared.Models.DTOs;
+using VoiceCloner.Shared.Models;
+using VoiceCloner.API.Services;
 
 namespace VoiceCloner.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsersController : ControllerBase
     {
-        private readonly ApiContext _context;
+        private readonly IUserService _service;
 
-        public UsersController(ApiContext context) => _context = context;
+        public UsersController(IUserService service)
+        {
+            _service = service;
+        }
 
         [HttpGet]
-        public IActionResult GetAll() => Ok(_context.Users.ToList());
-
-        [HttpGet("id")]
-        public IActionResult GetById(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll()
         {
-            var user = _context.Users.FirstOrDefault(u => u.UserId == id);
-            return user == null ? NotFound("Usuario no encontrado.") : Ok(user);
+            var users = await _service.GetAllAsync();
+            return Ok(users);
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var user = await _service.GetByIdAsync(id);
+            if (user == null) return NotFound("Usuario no encontrado.");
+            return Ok(user);
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] UserCreateDto dto)
+        [AllowAnonymous]
+        public async Task<IActionResult> Create([FromBody] UserCreateDto dto)
         {
-            var user = new User
-            {
-                Username = dto.Username,
-                Email = dto.Email
-            };
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            _context.Users.Add(user);
-            _context.SaveChanges();
-
-            return CreatedAtAction(nameof(GetById), new { id = user.UserId }, user);
+            var result = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.UserId }, result);
         }
 
-        [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] User user)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UserUpdateDto dto)
         {
-            var existing = _context.Users.FirstOrDefault(u => u.UserId == id);
-            if (existing == null) return NotFound("Usuario no encontrado.");
-
-            existing.Username = user.Username;
-            existing.Email = user.Email;
-            _context.SaveChanges();
-
-            return Ok(existing);
+            var updated = await _service.UpdateAsync(id, dto);
+            if (updated == null) return NotFound("Usuario no encontrado.");
+            return Ok(updated);
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
         {
-            var user = _context.Users.FirstOrDefault(u => u.UserId == id);
-            if (user == null) return NotFound("Usuario no encontrado.");
-
-            _context.Users.Remove(user);
-            _context.SaveChanges();
+            var success = await _service.DeleteAsync(id);
+            if (!success) return NotFound("Usuario no encontrado.");
             return NoContent();
         }
     }

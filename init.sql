@@ -15,6 +15,9 @@ CREATE TABLE Users (
 );
 GO
 
+ALTER TABLE Users
+ADD PasswordHash NVARCHAR(200) NULL;
+
 -- ========================
 -- Tabla de voces disponibles
 -- ========================

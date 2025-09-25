@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VoiceCloner.API.Data;
 using VoiceCloner.Shared.Models;
+using VoiceCloner.Shared.Models.DTOs;
 
 namespace VoiceCloner.API.Controllers
 {
@@ -23,10 +24,17 @@ namespace VoiceCloner.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] User user)
+        public IActionResult Create([FromBody] UserCreateDto dto)
         {
+            var user = new User
+            {
+                Username = dto.Username,
+                Email = dto.Email
+            };
+
             _context.Users.Add(user);
             _context.SaveChanges();
+
             return CreatedAtAction(nameof(GetById), new { id = user.UserId }, user);
         }
 

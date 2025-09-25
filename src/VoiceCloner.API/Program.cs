@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using VoiceCloner.API.Data;
+using HealthChecks.SqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,14 @@ builder.Services.AddCors(options =>
     .AllowAnyMethod()
     .AllowAnyHeader());
 });
+
+builder.Services.AddHealthChecks()
+    .AddSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        name: "VoiceClonerDB",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql" });
+
 
 builder.Services.AddDbContext<ApiContext>
     (options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -36,5 +45,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();

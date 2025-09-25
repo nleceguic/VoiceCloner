@@ -2,7 +2,7 @@
 {
     public class VoiceRequest
     {
-        public int RequestId { get; set; }
+        public int VoiceRequestId { get; set; }
         public int? UserId { get; set; }
         public int? VoiceId { get; set; }
         public string InputText { get; set; } = string.Empty;

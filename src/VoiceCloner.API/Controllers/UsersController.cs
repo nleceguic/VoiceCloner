@@ -30,7 +30,12 @@ namespace VoiceCloner.API.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var user = await _service.GetByIdAsync(id);
-            if (user == null) return NotFound("Usuario no encontrado.");
+            if (user == null)
+                return NotFound("Usuario no encontrado.");
+
+            if (User.Identity?.Name != user.Username && !User.IsInRole("Admin"))
+                return Forbid();
+
             return Ok(user);
         }
 
@@ -38,18 +43,42 @@ namespace VoiceCloner.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Create([FromBody] UserCreateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var result = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.UserId }, result);
+            try
+            {
+                var result = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = result.UserId }, result);
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UserUpdateDto dto)
         {
-            var updated = await _service.UpdateAsync(id, dto);
-            if (updated == null) return NotFound("Usuario no encontrado.");
-            return Ok(updated);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingUser = await _service.GetByIdAsync(id);
+            if (existingUser == null)
+                return NotFound("Usuario no encontrado.");
+
+            if (User.Identity?.Name != existingUser.Username && !User.IsInRole("Admin"))
+                return Forbid();
+
+            try
+            {
+                var updated = await _service.UpdateAsync(id, dto);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id:int}")]
@@ -57,7 +86,9 @@ namespace VoiceCloner.API.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _service.DeleteAsync(id);
-            if (!success) return NotFound("Usuario no encontrado.");
+            if (!success)
+                return NotFound("Usuario no encontrado.");
+
             return NoContent();
         }
     }

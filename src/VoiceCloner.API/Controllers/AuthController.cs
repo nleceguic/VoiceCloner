@@ -53,7 +53,7 @@ namespace VoiceCloner.API.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            var token = GenerateJwtToken(user.Username, "User");
+            var token = GenerateJwtToken(user.Username, user.Role);
 
             return Ok(new { token });
         }
@@ -78,7 +78,7 @@ namespace VoiceCloner.API.Controllers
                 return Unauthorized("Usuario o contraseña incorrectos.");
             }
 
-            var token = GenerateJwtToken(user.Username, "User");
+            var token = GenerateJwtToken(user.Username, user.Role);
 
             return Ok(new { token });
         }
@@ -91,21 +91,19 @@ namespace VoiceCloner.API.Controllers
         {
             var jwtSettings = _config.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, username),
-                new Claim(ClaimTypes.Role, role),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.Role, role)
             };
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpireMinutes"] ?? "60")),
-                signingCredentials: creds
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpireMinutes"]!)),
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);

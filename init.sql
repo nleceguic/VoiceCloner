@@ -18,6 +18,9 @@ GO
 ALTER TABLE Users
 ADD PasswordHash NVARCHAR(200) NULL;
 
+ALTER TABLE Users
+ADD Role NVARCHAR(20) NOT NULL DEFAULT 'User';
+
 -- ========================
 -- Tabla de voces disponibles
 -- ========================
@@ -30,6 +33,18 @@ CREATE TABLE Voices (
     CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
 );
 GO
+
+ALTER TABLE Voices
+DROP CONSTRAINT DF_Voices_CreatedAt;
+
+ALTER TABLE Voices
+ALTER COLUMN CreatedAt DATETIME2(3) NOT NULL;
+
+ALTER TABLE Voices
+ADD CONSTRAINT DF_Voices_CreatedAt DEFAULT GETUTCDATE() FOR CreatedAt;
+
+ALTER TABLE Voices
+ALTER COLUMN ExternalId NVARCHAR(255);
 
 -- ========================
 -- Peticiones de generación de voz
